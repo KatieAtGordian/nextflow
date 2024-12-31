@@ -53,8 +53,8 @@ class GoogleBatchScriptLauncher extends BashWrapperBuilder implements GoogleBatc
     /* ONLY FOR TESTING - DO NOT USE */
     protected GoogleBatchScriptLauncher() {}
 
-    GoogleBatchScriptLauncher(TaskBean bean, Path remoteBinDir) {
-        super(bean)
+    GoogleBatchScriptLauncher(TaskBean bean, Path remoteBinDir, GoogleBatchTaskHandler handler) {
+        super(bean, new GoogleBatchFileCopyStrategy(bean, handler))
         // keep track the google storage work dir
         this.remoteWorkDir = (CloudStoragePath) bean.workDir
         this.remoteBinDir = toContainerMount(remoteBinDir)
@@ -183,5 +183,31 @@ class GoogleBatchScriptLauncher extends BashWrapperBuilder implements GoogleBatc
 
     static String containerMountPath(CloudStoragePath path) {
         return "$MOUNT_ROOT/${path.bucket()}${path}"
+    }
+
+    @Override
+    protected String getScratchDirectoryCommand() {
+        "NXF_SCRATCH=$scratch"
+    }
+
+    @Override
+    protected String getUnstageControls() {
+        def result = super.getUnstageControls()
+        result += copyFile(TaskRun.CMD_EXIT, workDir.resolve(TaskRun.CMD_EXIT)) + ' || true\n'
+        return result
+    }
+
+    @Override
+    String getCleanupCmd(String scratch) { null }
+
+    @Override
+    protected String getStageCommand() { null }
+
+    @Override
+    protected String getUnstageCommand() { null }
+
+    @Override
+    String touchFile(Path file) {
+        return null
     }
 }
