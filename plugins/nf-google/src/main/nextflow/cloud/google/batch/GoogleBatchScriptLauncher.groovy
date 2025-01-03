@@ -187,7 +187,11 @@ class GoogleBatchScriptLauncher extends BashWrapperBuilder implements GoogleBatc
 
     @Override
     protected String getScratchDirectoryCommand() {
-        "NXF_SCRATCH=$scratch"
+        if (config.wave.enabled) {
+            return "NXF_SCRATCH=$scratch"
+        } else {
+            return super.getScratchDirectoryCommand()
+        }
     }
 
     @Override
@@ -201,10 +205,10 @@ class GoogleBatchScriptLauncher extends BashWrapperBuilder implements GoogleBatc
     String getCleanupCmd(String scratch) { null }
 
     @Override
-    protected String getStageCommand() { null }
+    protected String getStageCommand() { return config.wave.enabled ? null : 'nxf_stage'}
 
     @Override
-    protected String getUnstageCommand() { null }
+    protected String getUnstageCommand() { return config.wave.enabled ? null : 'nxf_unstage' }
 
     @Override
     String touchFile(Path file) {

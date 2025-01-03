@@ -21,6 +21,7 @@ import java.nio.file.Path
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import nextflow.cloud.google.batch.client.BatchConfig
 import nextflow.cloud.google.util.GsBashLib
 import nextflow.executor.SimpleFileCopyStrategy
 import nextflow.processor.TaskBean
@@ -36,34 +37,32 @@ import nextflow.util.Escape
 @CompileStatic
 class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy {
 
-    GoogleBatchConfig config
+    BatchConfig config
     GoogleBatchTaskHandler handler
     TaskBean task
 
     GoogleBatchFileCopyStrategy(TaskBean bean, GoogleBatchTaskHandler handler) {
         super(bean)
         this.handler = handler
-        this.config = handler.executor.config
+        this.config = handler.getExecutor().getConfig()
         this.task = bean
     }
 
     String getBeforeStartScript() {
-        GsBashLib.fromConfig(config)
+        GsBashLib.fromBatchConfig(config)
     }
 
     @Override
     String getStageInputFilesScript(Map<String, Path> inputFiles) {
-        final remoteTaskDir = getRemoteTaskDir(workDir)
+        final remoteTaskDir = Escape.uriPath(workDir)
         final stagingCommands = []
-
-        final reqPay = config.enableRequesterPaysBuckets ? config.project : ''
 
         for(String target : inputFiles.keySet()) {
             final sourcePath = inputFiles.get(target)
 
             final cmd = config.maxTransferAttempts > 1
-                    ? "downloads+=(\"nxf_cp_retry nxf_gs_download ${Escape.uriPath(sourcePath)} ${Escape.path(target)} ${reqPay}\")"
-                    : "downloads+=(\"nxf_gs_download ${Escape.uriPath(sourcePath)} ${Escape.path(target)} ${reqPay}\")"
+                    ? "downloads+=(\"nxf_cp_retry nxf_gs_download ${Escape.uriPath(sourcePath)} ${Escape.path(target)}\")"
+                    : "downloads+=(\"nxf_gs_download ${Escape.uriPath(sourcePath)} ${Escape.path(target)}\")"
 
             stagingCommands.add(cmd)
         }
@@ -77,14 +76,6 @@ class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy {
             result.append('downloads=(true)\n')
             result.append(stagingCommands.join('\n')).append('\n')
             result.append('nxf_parallel "${downloads[@]}"\n')
-        }
-
-        // copy the remoteBinDir if it is defined
-        if(config.remoteBinDir) {
-            final localTaskDir = getLocalTaskDir(workDir)
-            result
-                    .append("mkdir -p $localTaskDir/nextflow-bin").append('\n')
-                    .append("gsutil -m -q cp -P -r ${Escape.uriPath(config.remoteBinDir)}/* $localTaskDir/nextflow-bin").append('\n')
         }
 
         result.toString()
@@ -144,17 +135,12 @@ class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy {
         if( container )
             throw new IllegalArgumentException("Parameter `container` not supported by ${this.class.simpleName}")
 
-        final localTaskDir = getLocalTaskDir(workDir)
+        final localTaskDir = Escape.path(workDir)
         final result = new StringBuilder()
         final copy = environment ? new HashMap<String,String>(environment) : Collections.<String,String>emptyMap()
         // remove any external PATH
         if( copy.containsKey('PATH') )
             copy.remove('PATH')
-        // when a remote bin directory is provide managed it properly
-        if( config.remoteBinDir ) {
-            result << "chmod +x $localTaskDir/nextflow-bin/* || true\n"
-            result << "export PATH=$localTaskDir/nextflow-bin:\$PATH\n"
-        }
         // finally render the environment
         final envSnippet = super.getEnvScript(copy,false)
         if( envSnippet )

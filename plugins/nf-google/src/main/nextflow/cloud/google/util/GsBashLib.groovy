@@ -19,6 +19,7 @@ package nextflow.cloud.google.util
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import nextflow.Session
+import nextflow.cloud.google.batch.client.BatchConfig
 import nextflow.cloud.google.lifesciences.GoogleLifeSciencesConfig
 import nextflow.executor.BashFunLib
 
@@ -100,6 +101,18 @@ class GsBashLib extends BashFunLib<GsBashLib> {
                 .withDelayBetweenAttempts(config.delayBetweenAttempts)
                 .withParallelThreadCount(config.parallelThreadCount)
                 .withDownloadMaxComponents(config.downloadMaxComponents)
+                .render()
+    }
+
+    @Memoized
+    static String fromBatchConfig(BatchConfig config) {
+        new GsBashLib()
+                .includeCoreFun(true)
+                .withMaxParallelTransfers(config.getMaxParallelTransfers())
+                .withMaxTransferAttempts(config.getMaxTransferAttempts())
+                .withDelayBetweenAttempts(config.getDelayBetweenAttempts())
+                .withParallelThreadCount(config.getParallelThreadCount())
+                .withDownloadMaxComponents(config.getDownloadMaxComponents())
                 .render()
     }
 
