@@ -104,6 +104,12 @@ class BatchConfig implements CloudTransferOptions{
         result.serviceAccountEmail = session.config.navigate('google.batch.serviceAccountEmail')
         result.retryConfig = new BatchRetryConfig( session.config.navigate('google.batch.retryPolicy') as Map ?: Map.of() )
         result.autoRetryExitCodes = session.config.navigate('google.batch.autoRetryExitCodes', DEFAULT_RETRY_LIST) as List<Integer>
+        result.parallelThreadCount = session.config.navigate('google.batch.parallelThreadCount', DEFAULT_PARALLEL_THREAD_COUNT) as int
+        result.maxParallelTransfers = session.config.navigate('google.batch.maxParallelTransfers', MAX_TRANSFER) as int
+        result.maxTransferAttempts = session.config.navigate('google.batch.maxTransferAttempts', MAX_TRANSFER_ATTEMPTS) as int
+        result.delayBetweenAttempts = session.config.navigate('google.batch.delayBetweenAttempts', DEFAULT_DELAY_BETWEEN_ATTEMPTS) as Duration
+        result.downloadMaxComponents = session.config.navigate('google.batch.downloadMaxComponents', DEFAULT_DOWNLOAD_MAX_COMPONENTS) as int
+
         return result
     }
 

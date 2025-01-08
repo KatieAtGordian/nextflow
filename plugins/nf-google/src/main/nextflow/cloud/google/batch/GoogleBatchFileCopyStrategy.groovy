@@ -93,7 +93,8 @@ class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy {
 
     @Override
     String getUnstageOutputFilesScript(List<String> outputFiles, Path targetDir) {
-
+        final remoteTaskDir = Escape.uriPath(workDir)
+        
         final patterns = normalizeGlobStarPaths(outputFiles)
         // create a bash script that will copy the out file to the working directory
         log.trace "[GLS] Unstaging file path: $patterns"
@@ -109,7 +110,7 @@ class GoogleBatchFileCopyStrategy extends SimpleFileCopyStrategy {
         uploads=()
         IFS=\$'\\n'
         for name in \$(eval "ls -1d ${escape.join(' ')}" | sort | uniq); do
-            uploads+=("nxf_gs_upload '\$name' ${Escape.uriPath(targetDir)}")
+            uploads+=("nxf_gs_upload '\$name' ${remoteTaskDir}")
         done
         unset IFS
         nxf_parallel "\${uploads[@]}"
