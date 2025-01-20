@@ -21,7 +21,10 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.Session
 import nextflow.cloud.google.GoogleOpts
+import nextflow.cloud.CloudTransferOptions
+import nextflow.util.Duration
 import nextflow.util.MemoryUnit
+
 /**
  * Model Google Batch config settings
  *
@@ -29,11 +32,14 @@ import nextflow.util.MemoryUnit
  */
 @Slf4j
 @CompileStatic
-class BatchConfig {
+class BatchConfig implements CloudTransferOptions{
 
     static final private int DEFAULT_MAX_SPOT_ATTEMPTS = 0
     
     static final private List<Integer> DEFAULT_RETRY_LIST = List.of(50001)
+
+    public final static int DEFAULT_PARALLEL_THREAD_COUNT = 1
+    public final static int DEFAULT_DOWNLOAD_MAX_COMPONENTS = 8
 
     private GoogleOpts googleOpts
     private GoogleCredentials credentials
@@ -52,6 +58,12 @@ class BatchConfig {
     private BatchRetryConfig retryConfig
     private List<Integer> autoRetryExitCodes
 
+    private int parallelThreadCount = DEFAULT_PARALLEL_THREAD_COUNT
+    private int maxParallelTransfers = MAX_TRANSFER
+    private int maxTransferAttempts = MAX_TRANSFER_ATTEMPTS
+    private Duration delayBetweenAttempts = DEFAULT_DELAY_BETWEEN_ATTEMPTS
+    private int downloadMaxComponents = DEFAULT_DOWNLOAD_MAX_COMPONENTS
+
     GoogleOpts getGoogleOpts() { return googleOpts }
     GoogleCredentials getCredentials() { return credentials }
     List<String> getAllowedLocations() { allowedLocations }
@@ -68,6 +80,11 @@ class BatchConfig {
     String getServiceAccountEmail() { serviceAccountEmail }
     BatchRetryConfig getRetryConfig() { retryConfig }
     List<Integer> getAutoRetryExitCodes() { autoRetryExitCodes }
+    int getParallelThreadCount() { parallelThreadCount }
+    int getMaxParallelTransfers() { maxParallelTransfers }
+    int getMaxTransferAttempts() { maxTransferAttempts }
+    Duration getDelayBetweenAttempts() { delayBetweenAttempts }
+    int getDownloadMaxComponents() { downloadMaxComponents }
 
     static BatchConfig create(Session session) {
         final result = new BatchConfig()
@@ -87,6 +104,12 @@ class BatchConfig {
         result.serviceAccountEmail = session.config.navigate('google.batch.serviceAccountEmail')
         result.retryConfig = new BatchRetryConfig( session.config.navigate('google.batch.retryPolicy') as Map ?: Map.of() )
         result.autoRetryExitCodes = session.config.navigate('google.batch.autoRetryExitCodes', DEFAULT_RETRY_LIST) as List<Integer>
+        result.parallelThreadCount = session.config.navigate('google.batch.parallelThreadCount', DEFAULT_PARALLEL_THREAD_COUNT) as int
+        result.maxParallelTransfers = session.config.navigate('google.batch.maxParallelTransfers', MAX_TRANSFER) as int
+        result.maxTransferAttempts = session.config.navigate('google.batch.maxTransferAttempts', MAX_TRANSFER_ATTEMPTS) as int
+        result.delayBetweenAttempts = session.config.navigate('google.batch.delayBetweenAttempts', DEFAULT_DELAY_BETWEEN_ATTEMPTS) as Duration
+        result.downloadMaxComponents = session.config.navigate('google.batch.downloadMaxComponents', DEFAULT_DOWNLOAD_MAX_COMPONENTS) as int
+
         return result
     }
 

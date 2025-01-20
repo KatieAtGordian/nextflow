@@ -64,7 +64,7 @@ class GoogleBatchTaskHandler extends TaskHandler implements FusionAwareTask {
 
     private static final Pattern BATCH_ERROR_REGEX = ~/Batch Error: code/
 
-    private GoogleBatchExecutor executor
+    protected GoogleBatchExecutor executor
 
     private Path exitFile
 
@@ -143,7 +143,7 @@ class GoogleBatchTaskHandler extends TaskHandler implements FusionAwareTask {
         }
         else {
             final taskBean = task.toTaskBean()
-            return new GoogleBatchScriptLauncher(taskBean, executor.remoteBinDir)
+            return new GoogleBatchScriptLauncher(taskBean, executor.remoteBinDir, this)
                 .withConfig(executor.config)
         }
     }
@@ -445,6 +445,11 @@ class GoogleBatchTaskHandler extends TaskHandler implements FusionAwareTask {
             )
             .putAllLabels(task.config.getResourceLabels())
             .build()
+    }
+
+    // get executor
+    protected GoogleBatchExecutor getExecutor() {
+        return executor
     }
 
     /**
