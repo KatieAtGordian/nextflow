@@ -87,6 +87,17 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: make assemble
 
+      - name: Generate artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: make pack
+
+      - name: Upload artifact
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build/releases/*-gordian-dist
+
     #   - name: Test
     #     if: steps.changed-files.outputs.any_changed == 'true'
     #     run: |
