@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Plugin-Class: nextflow.cloud.googleGordian.GoogleCloudPlugin
+Plugin-Id: nf-google-gordian
+Plugin-Version: 0.0.1
+Plugin-Provider: Seqera Labs
+Plugin-Requires: >=24.0
